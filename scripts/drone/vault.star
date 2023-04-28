@@ -127,14 +127,14 @@ def secrets():
             "security_prefix",
         ),
         vault_secret(
-            'updater-app-id',
-            'infra/data/ci/github/updater-app',
-            'app-id',
+            "updater-app-id",
+            "infra/data/ci/github/updater-app",
+            "app-id",
         ),
         vault_secret(
-            'updater-app-installation-id',
-            'infra/data/ci/github/updater-app',
-            'app-installation-id',
+            "updater-app-installation-id",
+            "infra/data/ci/github/updater-app",
+            "app-installation-id",
         ),
         vault_secret(
             "updater-app-private-key",
