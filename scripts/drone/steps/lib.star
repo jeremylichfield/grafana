@@ -6,9 +6,9 @@ load(
     "scripts/drone/vault.star",
     "from_secret",
     "prerelease_bucket",
-    'updater_app_id',
-    'updater_app_installation_id',
-    'updater_app_private_key',
+    "updater_app_id",
+    "updater_app_installation_id",
+    "updater_app_private_key",
 )
 
 grabpl_version = "v3.0.32-pre3"
