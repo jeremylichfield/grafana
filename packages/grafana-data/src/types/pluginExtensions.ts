@@ -7,6 +7,7 @@ import { RawTimeRange, TimeZone } from './time';
 
 export enum PluginExtensionTypes {
   link = 'link',
+  element = 'element',
 }
 
 export type PluginExtension = {
