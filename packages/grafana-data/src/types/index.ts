@@ -56,8 +56,10 @@ export {
   PluginExtensionPoints,
   type PluginExtension,
   type PluginExtensionLink,
+  type PluginExtensionElement,
   type PluginExtensionConfig,
   type PluginExtensionLinkConfig,
+  type PluginExtensionElementConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
 } from './pluginExtensions';

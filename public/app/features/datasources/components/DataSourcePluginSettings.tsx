@@ -1,8 +1,8 @@
 import { cloneDeep } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { DataSourcePluginMeta, DataSourceSettings, PluginExtensionPoints } from '@grafana/data';
+import { AngularComponent, getAngularLoader, getPluginElementExtensions } from '@grafana/runtime';
 
 import { GenericDataSourcePlugin } from '../types';
 
@@ -74,13 +74,24 @@ export class DataSourcePluginSettings extends PureComponent<Props> {
       return null;
     }
 
+    const { extensions } = getPluginElementExtensions({
+      extensionPointId: PluginExtensionPoints.DataSourceConfig,
+      context: {},
+    });
+
     return (
       <div ref={(element) => (this.element = element)}>
+        {/* Plugin-defined settings */}
         {plugin.components.ConfigEditor &&
           React.createElement(plugin.components.ConfigEditor, {
             options: dataSource,
             onOptionsChange: this.onModelChanged,
           })}
+
+        {/* Extension point */}
+        {extensions.map((extension) => (
+          <div key={extension.id}>{extension.element}</div>
+        ))}
       </div>
     );
   }

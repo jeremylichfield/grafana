@@ -1,4 +1,4 @@
-import type { PluginExtensionLinkConfig } from '@grafana/data';
+import type { PluginExtensionLinkConfig, PluginExtensionElementConfig } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
 
 import * as pluginLoader from './plugin_loader';
@@ -6,7 +6,7 @@ import * as pluginLoader from './plugin_loader';
 export type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
-  extensionConfigs: PluginExtensionLinkConfig[];
+  extensionConfigs: Array<PluginExtensionLinkConfig | PluginExtensionElementConfig>;
 };
 
 export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {}): Promise<PluginPreloadResult[]> {

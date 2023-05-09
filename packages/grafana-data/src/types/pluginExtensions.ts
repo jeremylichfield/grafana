@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { DataQuery } from '@grafana/schema';
 
 import { RawTimeRange, TimeZone } from './time';
@@ -24,12 +26,17 @@ export type PluginExtensionLink = PluginExtension & {
   onClick?: (event?: React.MouseEvent) => void;
 };
 
+export type PluginExtensionElement = PluginExtension & {
+  type: PluginExtensionTypes.element;
+  element: React.ReactNode;
+};
+
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
 
 export type PluginExtensionConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
   PluginExtension,
-  'title' | 'description'
+  'title' | 'description' | 'type'
 > &
   ExtraProps & {
     // The unique identifier of the Extension Point
@@ -50,6 +57,13 @@ export type PluginExtensionLinkConfig<Context extends object = object> = PluginE
   }
 >;
 
+export type PluginExtensionElementConfig<Context extends object = object> = PluginExtensionConfig<
+  Context,
+  Pick<PluginExtensionElement, 'element'> & {
+    type: PluginExtensionTypes.element;
+  }
+>;
+
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
@@ -67,6 +81,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 // Extension Points available in core Grafana
 export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+  DataSourceConfig = 'grafana/datasources/config',
 }
 
 export type PluginExtensionPanelContext = {
