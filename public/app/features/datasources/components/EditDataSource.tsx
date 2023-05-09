@@ -162,6 +162,8 @@ export function EditDataSourceView({
     context: { jsonData: dataSource.jsonData, onUpdateJsonData, pluginId: dataSource.type },
   });
 
+  // HEADS UP!
+  // The "myorg-basic-app" is just for testing purposes and should be removed before merging this PR, or before this PR becomes ready-for-review.
   const allowedExtensions = extensions.filter(({ pluginId }) =>
     ['grafana-pdc-app', 'myorg-basic-app'].includes(pluginId)
   );
