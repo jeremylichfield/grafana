@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -30,6 +31,25 @@ type Team struct {
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
+}
+
+func (t *Team) ToResource() team.Resource {
+	r := team.Resource{
+		Metadata: team.Metadata{
+			// TODO: OrgID >>> namespace
+			// TODO: UID >> name
+			CreationTimestamp: t.Created,
+			UpdateTimestamp:   t.Updated,
+		},
+		Spec: team.Spec{
+			Name: t.Name,
+		},
+	}
+
+	if t.Email != "" {
+		r.Spec.Email = &t.Email
+	}
+	return r
 }
 
 // ---------------------
