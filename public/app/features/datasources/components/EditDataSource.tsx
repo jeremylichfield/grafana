@@ -5,8 +5,9 @@ import {
   DataSourcePluginContextProvider,
   DataSourcePluginMeta,
   DataSourceSettings as DataSourceSettingsType,
+  PluginExtensionPoints,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getPluginElementExtensions } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
@@ -149,6 +150,11 @@ export function EditDataSourceView({
     );
   }
 
+  const { extensions } = getPluginElementExtensions({
+    extensionPointId: PluginExtensionPoints.DataSourceConfig,
+    context: {},
+  });
+
   return (
     <form onSubmit={onSubmit}>
       {!hasWriteRights && <DataSourceMissingRightsMessage />}
@@ -176,6 +182,11 @@ export function EditDataSourceView({
           />
         </DataSourcePluginContextProvider>
       )}
+
+      {/* Extension point */}
+      {extensions.map((extension) => (
+        <div key={extension.id}>{extension.element}</div>
+      ))}
 
       <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 
