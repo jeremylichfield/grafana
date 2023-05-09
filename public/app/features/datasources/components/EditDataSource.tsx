@@ -162,6 +162,10 @@ export function EditDataSourceView({
     context: { jsonData: dataSource.jsonData, onUpdateJsonData, pluginId: dataSource.type },
   });
 
+  const allowedExtensions = extensions.filter(({ pluginId }) =>
+    ['grafana-pdc-app', 'myorg-basic-app'].includes(pluginId)
+  );
+
   return (
     <form onSubmit={onSubmit}>
       {!hasWriteRights && <DataSourceMissingRightsMessage />}
@@ -191,7 +195,7 @@ export function EditDataSourceView({
       )}
 
       {/* Extension point */}
-      {extensions.map((extension) => (
+      {allowedExtensions.map((extension) => (
         <div key={extension.id}>{extension.element}</div>
       ))}
 
