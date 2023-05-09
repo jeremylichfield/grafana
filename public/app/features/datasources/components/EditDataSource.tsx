@@ -1,4 +1,5 @@
 import { AnyAction } from '@reduxjs/toolkit';
+import { omit } from 'lodash';
 import React from 'react';
 
 import {
@@ -150,9 +151,15 @@ export function EditDataSourceView({
     );
   }
 
+  // Used by extensions that can only modify certain parts of the `jsonData`
+  const onUpdateJsonData = (jsonData: Record<string, unknown>) => {
+    const protectedFields = ['authType', 'defaultRegion', 'profile', 'manageAlerts', 'alertmanagerUid'];
+    onOptionsChange({ ...dataSource, jsonData: { ...dataSource.jsonData, ...omit(jsonData, protectedFields) } });
+  };
+
   const { extensions } = getPluginElementExtensions({
     extensionPointId: PluginExtensionPoints.DataSourceConfig,
-    context: {},
+    context: { jsonData: dataSource.jsonData, onUpdateJsonData, pluginId: dataSource.type },
   });
 
   return (
