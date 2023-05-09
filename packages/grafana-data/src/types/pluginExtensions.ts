@@ -12,7 +12,7 @@ export enum PluginExtensionTypes {
   element = 'element',
 }
 
-export type PluginExtension = {
+export type PluginExtensionBase = {
   id: string;
   type: PluginExtensionTypes;
   title: string;
@@ -20,22 +20,24 @@ export type PluginExtension = {
   pluginId: string;
 };
 
-export type PluginExtensionLink = PluginExtension & {
+export type PluginExtensionLink = PluginExtensionBase & {
   type: PluginExtensionTypes.link;
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
 };
 
-export type PluginExtensionElement = PluginExtension & {
+export type PluginExtensionElement = PluginExtensionBase & {
   type: PluginExtensionTypes.element;
   element: React.ReactNode;
 };
 
+export type PluginExtension = PluginExtensionLink | PluginExtensionElement;
+
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
 
-export type PluginExtensionConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
-  PluginExtension,
+export type PluginExtensionBaseConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
+  PluginExtensionBase,
   'title' | 'description' | 'type'
 > &
   ExtraProps & {
@@ -49,7 +51,7 @@ export type PluginExtensionConfig<Context extends object = object, ExtraProps ex
     ) => Partial<{ title: string; description: string } & ExtraProps> | undefined;
   };
 
-export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionConfig<
+export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionBaseConfig<
   Context,
   Pick<PluginExtensionLink, 'path'> & {
     type: PluginExtensionTypes.link;
@@ -57,12 +59,14 @@ export type PluginExtensionLinkConfig<Context extends object = object> = PluginE
   }
 >;
 
-export type PluginExtensionElementConfig<Context extends object = object> = PluginExtensionConfig<
+export type PluginExtensionElementConfig<Context extends object = object> = PluginExtensionBaseConfig<
   Context,
   Pick<PluginExtensionElement, 'element'> & {
     type: PluginExtensionTypes.element;
   }
 >;
+
+export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionElementConfig;
 
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
