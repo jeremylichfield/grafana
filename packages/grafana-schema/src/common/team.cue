@@ -1,6 +1,6 @@
 package common
 
-// This team schema matches values currently returned from the 
+// TeamDTO represents the team status and associated permissions
 TeamDTO: {
     // OrgId is the ID of an organisation the team belongs to.
     orgId: int64

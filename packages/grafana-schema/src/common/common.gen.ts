@@ -772,7 +772,7 @@ export enum TableCellHeight {
 export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
 
 /**
- * This team schema matches values currently returned from the
+ * TeamDTO represents the team status and associated permissions
  */
 export interface TeamDTO {
   /**
