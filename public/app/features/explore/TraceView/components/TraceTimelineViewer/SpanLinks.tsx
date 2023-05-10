@@ -25,6 +25,8 @@ const renderMenuItems = (
             <MenuItem
               key={i}
               label="Logs for this span"
+              /*
+              We at Adobe are not using this internal link as we want the user to go to the external link here
               onClick={
                 link.onClick
                   ? (event) => {
@@ -40,6 +42,7 @@ const renderMenuItems = (
                     }
                   : undefined
               }
+              */
               url={link.href}
               className={styles.menuItem}
             />

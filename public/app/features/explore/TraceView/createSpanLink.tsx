@@ -23,7 +23,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
+import { getFieldLinksForExplore } from '../utils/links';
 
 import { SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinks } from './components/types/links';
@@ -113,7 +113,7 @@ export function createSpanLinkFactory({
 /**
  * Default keys to use when there are no configured tags.
  */
-const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ key: k }));
+const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod', 'index', 'sourcetype'].map((k) => ({ key: k }));
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
@@ -127,7 +127,7 @@ function legacyCreateSpanLinkFactory(
   if (traceToLogsOptions?.datasourceUid) {
     logsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
   }
-  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
+  //const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
 
   let metricsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToMetricsOptions?.datasourceUid) {
@@ -152,6 +152,7 @@ function legacyCreateSpanLinkFactory(
         case 'loki':
           tags = getFormattedTags(span, tagsToUse);
           query = getQueryForLoki(span, traceToLogsOptions, tags, customQuery);
+          query = getUrlForExternalSplunkgetQueryForSplunk(span, traceToLogsOptions, customQuery);
           break;
         case 'grafana-splunk-datasource':
           tags = getFormattedTags(span, tagsToUse, { joinBy: ' ' });
@@ -162,9 +163,6 @@ function legacyCreateSpanLinkFactory(
           tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':', joinBy: ' AND ' });
           query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
           break;
-        case 'grafana-falconlogscale-datasource':
-          tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
-          query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
       }
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -188,9 +186,16 @@ function legacyCreateSpanLinkFactory(
           },
         };
 
+        // We don't need to validate this change as we are not updating any more fields here.
+
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
-        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
+        //if (dataLinkHasAllVariablesDefined(dataLink.internal!.query, scopedVars)) {
+
+          console.log('The dataLinkHasAllVariables');
+
+          /* We are not using link variable hence commenting it out
+          
           const link = mapInternalLinkToExplore({
             link: dataLink,
             internalLink: dataLink.internal!,
@@ -205,22 +210,23 @@ function legacyCreateSpanLinkFactory(
                   ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
                   : 0,
               },
-              isSplunkDS
-            ),
-            field: {} as Field,
-            onClickFn: splitOpenFn,
-            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-          });
+            isSplunkDS
+          ),
+          field: {} as Field,
+          onClickFn: splitOpenFn,
+          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+        });
+        */
 
-          links.logLinks = [
-            {
-              href: link.href,
-              onClick: link.onClick,
-              content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
-              field,
-            },
-          ];
-        }
+        links.logLinks = [
+          {
+            href: dataLink.internal!.query.refId,
+            //onClick: link.onClick,
+            content: <Icon name="gf-logs" title="Explore the logs for this in new tab" />,
+            field,
+          },
+        ];
+        //}
       }
     }
 
@@ -315,6 +321,8 @@ function getQueryForLoki(
 ): LokiQuery | undefined {
   const { filterByTraceID, filterBySpanID } = options;
 
+  console.log('The current tag value in Loki is', tags);
+
   if (customQuery) {
     return { expr: customQuery, refId: '' };
   }
@@ -331,11 +339,86 @@ function getQueryForLoki(
     expr += ' |="${__span.spanId}"';
   }
 
+  console.log('loki expression', expr);
   return {
     expr: expr,
     refId: '',
   };
 }
+
+/*
+Added a new function getUrlForExternalSplunkgetQueryForSplunk to genrate Splunk URL from 
+
+*/
+
+function getUrlForExternalSplunkgetQueryForSplunk(
+  span: TraceSpan,
+  options: TraceToLogsOptionsV2,
+  customQuery?: string
+) {
+  const { filterByTraceID, filterBySpanID, splunkUrl } = options;
+
+  let splunkSearchURL = '';
+  let placeholderdxSplunkURL = 'https://splunk.or1.adobe.net/en-US/app/search/search';
+  if (customQuery) {
+    return { query: customQuery, refId: '' };
+  }
+
+  let queryTags = options.tags;
+
+  //console.log('The queryTAG value is', queryTags);
+  let query = '?q=';
+
+  // Look for the index and other tags and build the query accordingly
+
+  if (queryTags && queryTags.length > 0) {
+    // Convert the tags object into string []
+    const tags = queryTags.reduce((acc, tag) => {
+      acc.push(`${tag.key}="${tag.value}"`);
+      return acc;
+    }, [] as string[]);
+
+    if (tags && tags.length > 0) {
+      // Add the index tag in the begining of query else splunk won't run the query search
+      for (const tag of tags) {
+        if (tag.search('index') !== -1) {
+          query += ` ${tag} `;
+          break;
+        }
+      }
+
+      // Add rest of the tags
+      for (const tag of tags) {
+        if (tag.search('index') === -1) {
+          query += ` ${tag} `;
+        }
+      }
+    }
+  }
+
+  if (filterByTraceID && span.traceID) {
+    query += ` "${span.traceID}"`;
+  }
+  if (filterBySpanID && span.spanID) {
+    query += ` "${span.spanID}"`;
+  }
+
+  //console.log('The value of Splunk url from user is', splunkUrl);
+
+  if (splunkUrl && splunkUrl?.length > 0) {
+    splunkSearchURL = splunkUrl + query;
+  } else {
+    splunkSearchURL = placeholderdxSplunkURL + query;
+  }
+
+  // console.log('the value of updated splunk url is', splunkSearchURL);
+
+  return {
+    query: query,
+    refId: splunkSearchURL, // Pass the splunkURL instead of an empty field for reference
+  };
+}
+
 
 // we do not have access to the dataquery type for opensearch,
 // so here is a minimal interface that handles both elasticsearch and opensearch.
@@ -402,35 +485,6 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
 
   return {
     query: query,
-    refId: '',
-  };
-}
-
-function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
-  const { filterByTraceID, filterBySpanID } = options;
-
-  if (customQuery) {
-    return {
-      lsql: customQuery,
-      refId: '',
-    };
-  }
-
-  if (!tags) {
-    return undefined;
-  }
-
-  let lsql = '${__tags}';
-  if (filterByTraceID && span.traceID) {
-    lsql += ' or "${__span.traceId}"';
-  }
-
-  if (filterBySpanID && span.spanID) {
-    lsql += ' or "${__span.spanId}"';
-  }
-
-  return {
-    lsql,
     refId: '',
   };
 }
@@ -574,3 +628,70 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
     },
   };
 }
+
+/**
+
+  We are not using this fuction hence commenting it out to keep the existing source code.
+ 
+type VarValue = string | number | boolean | undefined;
+
+ * This function takes some code from  template service replace() function to figure out if all variables are
+ * interpolated. This is so we don't show links that do not work. This cuts a lots of corners though and that is why
+ * it's a local function. We sort of don't care about the dashboard template variables for example. Also we only link
+ * to loki/splunk/elastic, so it should be less probable that user needs part of a query that looks like a variable but
+ * is actually part of the query language.
+ * @param query
+ * @param scopedVars
+
+function dataLinkHasAllVariablesDefined<T extends DataQuery>(query: T, scopedVars: ScopedVars): boolean {
+  const vars = getVariablesMapInTemplate(getStringsFromObject(query), scopedVars);
+  return Object.values(vars).every((val) => val !== undefined);
+}
+
+function getStringsFromObject<T extends Object>(obj: T): string {
+  let acc = '';
+  for (const k of Object.keys(obj)) {
+    // Honestly not sure how to type this to make TS happy.
+    // @ts-ignore
+    if (typeof obj[k] === 'string') {
+      // @ts-ignore
+      acc += ' ' + obj[k];
+      // @ts-ignore
+    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
+      // @ts-ignore
+      acc += ' ' + getStringsFromObject(obj[k]);
+    }
+  }
+  return acc;
+}
+
+function getVariablesMapInTemplate(target: string, scopedVars: ScopedVars): Record<string, VarValue> {
+  const regex = new RegExp(variableRegex);
+  const values: Record<string, VarValue> = {};
+
+  target.replace(regex, (match, var1, var2, fmt2, var3, fieldPath) => {
+    const variableName = var1 || var2 || var3;
+    values[variableName] = getVariableValue(variableName, fieldPath, scopedVars);
+
+    // Don't care about the result anyway
+    return '';
+  });
+
+  return values;
+}
+
+function getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars): VarValue {
+  const scopedVar = scopedVars[variableName];
+  if (!scopedVar) {
+    return undefined;
+  }
+
+  if (fieldPath) {
+    // @ts-ignore ScopedVars are typed in way that I don't think this is possible to type correctly.
+    return property(fieldPath)(scopedVar.value);
+  }
+
+  return scopedVar.value;
+}
+
+**/

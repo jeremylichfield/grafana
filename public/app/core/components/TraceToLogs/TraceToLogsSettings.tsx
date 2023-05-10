@@ -33,6 +33,7 @@ export interface TraceToLogsOptionsV2 {
   filterByTraceID?: boolean;
   filterBySpanID?: boolean;
   query?: string;
+  splunkUrl?: string;
   customQuery: boolean;
 }
 
@@ -75,14 +76,13 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     'elasticsearch',
     'grafana-splunk-datasource', // external
     'grafana-opensearch-datasource', // external
-    'grafana-falconlogscale-datasource', // external
   ];
 
   const traceToLogs = useMemo(
     (): TraceToLogsOptionsV2 => getTraceToLogsOptions(options.jsonData) || { customQuery: false },
     [options.jsonData]
   );
-  const { query = '', tags, customQuery } = traceToLogs;
+  const { query = '', tags, customQuery, splunkUrl } = traceToLogs;
 
   const updateTracesToLogs = useCallback(
     (value: Partial<TraceToLogsOptionsV2>) => {
@@ -107,14 +107,12 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     <div className={css({ width: '100%' })}>
       <h3 className="page-heading">Trace to logs</h3>
 
-      <div className={styles.infoText}>Navigate from a trace span to the selected data source&apos;s logs.</div>
+      <div className={styles.infoText}>
+        Trace to logs lets you navigate from a trace span to the selected data source&apos;s logs.
+      </div>
 
       <InlineFieldRow>
-        <InlineField
-          tooltip="The logs data source the trace is going to navigate to"
-          label="Data source"
-          labelWidth={26}
-        >
+        <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
             filter={(ds) => supportedDataSourceTypes.includes(ds.type)}
@@ -168,7 +166,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Use a custom query with the possibility to interpolate variables from the trace or span"
+          tooltip="Use custom query with possibility to interpolate variables from the trace or span."
           label="Use custom query"
           labelWidth={26}
         >
@@ -186,7 +184,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         <InlineField
           label="Query"
           labelWidth={26}
-          tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword"
+          tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword."
           grow
         >
           <Input
@@ -198,6 +196,22 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           />
         </InlineField>
       )}
+      <InlineFieldRow>
+        <InlineField
+          label="Splunkurl"
+          labelWidth={26}
+          grow
+          tooltip="Splunk url where your data is present e.g. https://splunk.or1.adobe.net/en-US/app/search/search"
+        >
+          <Input
+            type="text"
+            //placeholder="https://splunk.or1.adobe.net/en-US/app/search/search"
+            width={40}
+            onChange={(e) => updateTracesToLogs({ splunkUrl: e.currentTarget.value })}
+            value={splunkUrl}
+          />
+        </InlineField>
+      </InlineFieldRow>
     </div>
   );
 }
@@ -241,11 +255,11 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
         label={`Span ${props.type} time shift`}
         labelWidth={26}
         grow
-        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`}
+        tooltip={`Shifts the ${props.type} time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h`}
       >
         <Input
           type="text"
-          placeholder="0"
+          placeholder="1h"
           width={40}
           onChange={(e) => props.onChange(e.currentTarget.value)}
           value={props.value}
