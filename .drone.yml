@@ -825,8 +825,12 @@ steps:
       from_secret: docker_password_pr
     DOCKER_USER:
       from_secret: docker_username_pr
-    GITHUB_TOKEN:
-      from_secret: github_token_pr
+    GITHUB_APP_ID:
+      from_secret: updater-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: updater-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: updater-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana
   volumes:
@@ -7234,6 +7238,24 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 get:
+  name: private-key
+  path: infra/data/ci/github/updater-app
+kind: secret
+name: updater-app-private-key
+---
+get:
+  name: upstream-repo-main
+  path: infra/data/ci/grafana-release-eng/grafana-enterprise
+kind: secret
+name: grafana_upstream_repo_main
+---
+get:
+  name: upstream-repo-tag
+  path: infra/data/ci/grafana-release-eng/grafana-enterprise
+kind: secret
+name: grafana_upstream_repo_tag
+---
+get:
   name: gcp_service_account_base64
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
@@ -7252,6 +7274,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 789d10ea97ae77a228c1f601a2b12399f402d070019af46c2126b1e3f93e7cb6
+hmac: 43b121a0c973bbf13fdfde138e365395f5e13e068b10813d2731ead244b834e6
 
 ...
