@@ -23,7 +23,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { getFieldLinksForExplore } from '../utils/links';
+import { getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinks } from './components/types/links';
@@ -163,6 +163,9 @@ function legacyCreateSpanLinkFactory(
           tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':', joinBy: ' AND ' });
           query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
           break;
+        case 'grafana-falconlogscale-datasource':
+          tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
+          query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
       }
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -192,7 +195,7 @@ function legacyCreateSpanLinkFactory(
         // getQueryFor* functions but this is for case of custom query supplied by the user.
         //if (dataLinkHasAllVariablesDefined(dataLink.internal!.query, scopedVars)) {
 
-          console.log('The dataLinkHasAllVariables');
+        console.log('The dataLinkHasAllVariables');
 
           /* We are not using link variable hence commenting it out
           
@@ -419,7 +422,6 @@ function getUrlForExternalSplunkgetQueryForSplunk(
   };
 }
 
-
 // we do not have access to the dataquery type for opensearch,
 // so here is a minimal interface that handles both elasticsearch and opensearch.
 interface ElasticsearchOrOpensearchQuery extends DataQuery {
@@ -485,6 +487,35 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
 
   return {
     query: query,
+    refId: '',
+  };
+}
+
+function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+  const { filterByTraceID, filterBySpanID } = options;
+
+  if (customQuery) {
+    return {
+      lsql: customQuery,
+      refId: '',
+    };
+  }
+
+  if (!tags) {
+    return undefined;
+  }
+
+  let lsql = '${__tags}';
+  if (filterByTraceID && span.traceID) {
+    lsql += ' or "${__span.traceId}"';
+  }
+
+  if (filterBySpanID && span.spanID) {
+    lsql += ' or "${__span.spanId}"';
+  }
+
+  return {
+    lsql,
     refId: '',
   };
 }
