@@ -1152,6 +1152,12 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
             docker_repo,
         )
 
+    if ver_mode == "pr":
+        environment = {
+            "DOCKER_USER": from_secret("docker_username_pr"),
+            "DOCKER_PASSWORD": from_secret("docker_password_pr"),
+        }
+
     step = {
         "name": "publish-images-{}".format(name),
         "image": "google/cloud-sdk",

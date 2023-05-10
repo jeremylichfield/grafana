@@ -802,6 +802,34 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+- commands:
+  - ./bin/build build-docker --edition oss --ubuntu -archs amd64
+  depends_on:
+  - copy-packages-for-docker
+  - compile-build-cmd
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: build-docker-images-ubuntu
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
+  depends_on:
+  - build-docker-images
+  - build-docker-images-ubuntu
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password_pr
+    DOCKER_USER:
+      from_secret: docker_username_pr
+  image: google/cloud-sdk
+  name: publish-images-grafana
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 trigger:
   event:
   - pull_request
@@ -7222,6 +7250,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 3e9459f86eb6cc4301481b61d507a8c27b15309c096f7608db29ced62f571689
+hmac: b8c8c23f5593cea2c2bbf8caccf854b3e8b40544167f378a863a21e1ad62bb88
 
 ...
